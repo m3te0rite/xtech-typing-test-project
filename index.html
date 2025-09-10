@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>xtech | MiniType</title>
+  <link rel="icon" href="icon.png">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    h2 {
+      margin-bottom: 10px;
+      font-size: 1.5em;
+      color: #00ff99;
+    }
+    #words {
+      max-width: 90%;
+      font-size: 1.5em;
+      line-height: 2em;
+      word-wrap: break-word;
+      margin-bottom: 20px;
+    }
+    #input {
+      width: 80%;
+      padding: 10px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 5px;
+      outline: none;
+      background: #222;
+      color: #fff;
+    }
+    #stats {
+      margin-top: 20px;
+      font-size: 1em;
+    }
+    .correct { color: #00ff99; }
+    .incorrect { color: #ff0055; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #words span {
+      animation: fadeIn 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+
+    <div>
+        <p style=" font-size:3em; color: black; background-color: white; font-weight: 750;">XTECH</p>
+    </div>
+
+    <h2>MiniType</h2>
+    
+    <div id="words"></div>
+    <input type="text" id="input" autocomplete="off" autofocus />
+    <div id="stats"></div>
+
+  <script>
+    const baseWords = [
+      "time","light","code","dream","sky","fire","wave","dust","mind","path",
+      "apple","orange","banana","grape","melon","chair","table","window","door","floor",
+      "river","mountain","forest","cloud","storm","rain","snow","sun","moon","star",
+      "happy","sad","fast","slow","bright","dark","cold","hot","new","old",
+      "run","walk","jump","fly","swim","think","feel","see","hear","touch",
+      "blue","red","green","yellow","black","white","purple","pink","gray","brown",
+      "cat","dog","bird","fish","horse","cow","sheep","pig","mouse","lion",
+      "car","bus","train","plane","bike","boat","truck","road","street","bridge",
+      "book","pen","paper","note","letter","story","song","music","dance","game",
+      "love","hate","hope","fear","joy","anger","peace","war","truth","lie"
+    ];
+
+    function generatePhrase() {
+      let phrase = [];
+      for (let i = 0; i < 25; i++) {
+        phrase.push(baseWords[Math.floor(Math.random() * baseWords.length)]);
+      }
+      return phrase.join(" ");
+    }
+
+    let currentWords = "";
+    let startTime = null;
+    let typed = "";
+    let correctChars = 0;
+    let totalChars = 0;
+
+    const wordsDiv = document.getElementById("words");
+    const input = document.getElementById("input");
+    const stats = document.getElementById("stats");
+
+    function loadWords() {
+      currentWords = generatePhrase();
+      wordsDiv.innerHTML = "";
+      currentWords.split("").forEach(char => {
+        const span = document.createElement("span");
+        span.textContent = char;
+        wordsDiv.appendChild(span);
+      });
+      typed = "";
+      input.value = "";
+      startTime = null;
+      correctChars = 0;
+      totalChars = 0;
+      stats.textContent = "";
+      input.focus();
+    }
+
+    input.addEventListener("input", () => {
+      if (!startTime) startTime = new Date();
+      typed = input.value;
+      totalChars = typed.length;
+      correctChars = 0;
+
+      [...wordsDiv.children].forEach((span, i) => {
+        const char = typed[i];
+        if (char == null) {
+          span.className = "";
+        } else if (char === span.textContent) {
+          span.className = "correct";
+          correctChars++;
+        } else {
+          span.className = "incorrect";
+        }
+      });
+
+      if (typed.length >= currentWords.length) {
+        const duration = (new Date() - startTime) / 1000;
+        const wpm = Math.round((correctChars / 5) / (duration / 60));
+        const accuracy = Math.round((correctChars / totalChars) * 100);
+        stats.textContent = `WPM: ${wpm} | Accuracy: ${accuracy}% (Tab + Enter to retry)`;
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        document.addEventListener("keydown", function handler(ev) {
+          if (ev.key === "Enter") {
+            ev.preventDefault();
+            loadWords();
+            document.removeEventListener("keydown", handler);
+          }
+        });
+      }
+    });
+
+    loadWords();
+  </script>
+</body>
+</html>
