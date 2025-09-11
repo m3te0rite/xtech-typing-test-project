@@ -53,7 +53,6 @@
     #words span {
       animation: fadeIn 0.3s ease;
     }
-
     .footer {
       margin-top: 32px;
       margin-bottom: 32px;
@@ -65,25 +64,40 @@
       position: fixed; 
       bottom: 0;
     }
+    #modeSelector {
+      margin-bottom: 20px;
+      padding: 8px;
+      font-size: 1em;
+      background: #222;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
 
-    <div>
-        <p style=" font-size:3em; color: black; background-color: white; font-weight: 750;">XTECH</p>
-    </div>
+  <div>
+    <p style=" font-size:3em; color: black; background-color: white; font-weight: 750;">XTECH</p>
+  </div>
 
-    <h2>MiniType</h2>
-    
-    <div id="words"></div>
-    <input type="text" id="input" autocomplete="off" autofocus />
-    <div id="stats"></div>
+  <h2>MiniType</h2>
 
+  <select id="modeSelector">
+    <option value="time-15">15 Seconds</option>
+    <option value="time-30">30 Seconds</option>
+    <option value="time-60">60 Seconds</option>
+    <option value="words-10">10 Words</option>
+    <option value="words-30" selected>30 Words</option>
+    <option value="words-50">50 Words</option>
+  </select>
 
-    
-<div class="footer">
-</div>
-<br>
+  <div id="words"></div>
+  <input type="text" id="input" autocomplete="off" autofocus />
+  <div id="stats"></div>
+
+  <div class="footer"></div>
+  <br>
 
   <script>
     const baseWords = [
@@ -99,39 +113,65 @@
       "love","hate","hope","fear","joy","anger","peace","war","truth","lie"
     ];
 
-    function generatePhrase() {
-      let phrase = [];
-      for (let i = 0; i < 25; i++) {
-        phrase.push(baseWords[Math.floor(Math.random() * baseWords.length)]);
-      }
-      return phrase.join(" ");
-    }
-
     let currentWords = "";
     let startTime = null;
     let typed = "";
     let correctChars = 0;
     let totalChars = 0;
+    let timer = null;
 
     const wordsDiv = document.getElementById("words");
     const input = document.getElementById("input");
     const stats = document.getElementById("stats");
+    const modeSelector = document.getElementById("modeSelector");
+
+    function generatePhrase(wordCount) {
+      let phrase = [];
+      for (let i = 0; i < wordCount; i++) {
+        phrase.push(baseWords[Math.floor(Math.random() * baseWords.length)]);
+      }
+      return phrase.join(" ");
+    }
 
     function loadWords() {
-      currentWords = generatePhrase();
+      clearTimeout(timer);
+      const mode = modeSelector.value;
+      let wordCount = 30;
+      let timeLimit = null;
+
+      if (mode.startsWith("words")) {
+        wordCount = parseInt(mode.split("-")[1]);
+      } else if (mode.startsWith("time")) {
+        timeLimit = parseInt(mode.split("-")[1]);
+        wordCount = 100;
+      }
+
+      currentWords = generatePhrase(wordCount);
       wordsDiv.innerHTML = "";
       currentWords.split("").forEach(char => {
         const span = document.createElement("span");
         span.textContent = char;
         wordsDiv.appendChild(span);
       });
+
       typed = "";
       input.value = "";
       startTime = null;
       correctChars = 0;
       totalChars = 0;
       stats.textContent = "";
+      input.disabled = false;
       input.focus();
+
+      if (timeLimit) {
+        timer = setTimeout(() => {
+          input.disabled = true;
+          const duration = timeLimit;
+          const wpm = Math.round((correctChars / 5) / (duration / 60));
+          const accuracy = Math.round((correctChars / totalChars) * 100);
+          stats.textContent = `Time's up! WPM: ${wpm} | Accuracy: ${accuracy}% (Tab + Enter to retry)`;
+        }, timeLimit * 1000);
+      }
     }
 
     input.addEventListener("input", () => {
@@ -152,11 +192,13 @@
         }
       });
 
-      if (typed.length >= currentWords.length) {
+      const mode = modeSelector.value;
+      if (mode.startsWith("words") && typed.length >= currentWords.length) {
         const duration = (new Date() - startTime) / 1000;
         const wpm = Math.round((correctChars / 5) / (duration / 60));
         const accuracy = Math.round((correctChars / totalChars) * 100);
         stats.textContent = `WPM: ${wpm} | Accuracy: ${accuracy}% (Tab + Enter to retry)`;
+        input.disabled = true;
       }
     });
 
@@ -173,18 +215,14 @@
       }
     });
 
+    modeSelector.addEventListener("change", loadWords);
     loadWords();
   </script>
 
-
-
-
-    <script>
-        // Example: Show current year automatically
-        document.querySelector('.footer').innerHTML =
-          `&copy; ${new Date().getFullYear()} XTECH. All rights reserved.`;
-    </script>
-
+  <script>
+    document.querySelector('.footer').innerHTML =
+      `&copy; ${new Date().getFullYear()} XTECH. All rights reserved.`;
+  </script>
 
 </body>
 </html>
